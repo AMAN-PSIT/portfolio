@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Randhir Singh — Identity Architect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#070B16;
+  --bg2:#0B1224;
+  --panel:rgba(17,26,48,.55);
+  --line:rgba(79,209,197,.18);
+  --cyan:#4FD1C5;
+  --cyan-dim:rgba(79,209,197,.55);
+  --amber:#F6AD55;
+  --text:#E2E8F0;
+  --muted:#8FA3BF;
+  --display:'Space Grotesk',sans-serif;
+  --body:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden;line-height:1.6}
+::selection{background:var(--cyan);color:#06121f}
+
+/* ---------- 3D canvas ---------- */
+#nexus{position:fixed;inset:0;z-index:0;pointer-events:none}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 35%,transparent 30%,rgba(7,11,22,.78) 100%)}
+
+/* ---------- layout ---------- */
+.wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 28px}
+section{padding:110px 0}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;color:var(--cyan);
+  text-transform:uppercase;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--cyan-dim)}
+h2{font-family:var(--display);font-size:clamp(1.9rem,4vw,2.7rem);font-weight:700;
+  letter-spacing:-.02em;margin-bottom:14px}
+.sub{color:var(--muted);max-width:620px;font-size:1.02rem;margin-bottom:48px}
+
+/* ---------- nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;
+  align-items:center;padding:18px 32px;backdrop-filter:blur(14px);
+  background:rgba(7,11,22,.6);border-bottom:1px solid rgba(79,209,197,.08)}
+.logo{font-family:var(--mono);font-size:.85rem;color:var(--text);text-decoration:none}
+.logo b{color:var(--cyan)}
+nav ul{display:flex;gap:28px;list-style:none}
+nav a{color:var(--muted);text-decoration:none;font-size:.86rem;font-family:var(--mono);transition:color .2s}
+nav a:hover,nav a:focus-visible{color:var(--cyan)}
+a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:2px}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:120px}
+.status{font-family:var(--mono);font-size:.78rem;color:var(--cyan);display:inline-flex;
+  align-items:center;gap:10px;border:1px solid var(--line);border-radius:100px;
+  padding:7px 16px;width:fit-content;background:rgba(79,209,197,.06);margin-bottom:30px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);
+  box-shadow:0 0 10px var(--cyan);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+h1{font-family:var(--display);font-size:clamp(2.6rem,7vw,5.4rem);line-height:1.04;
+  font-weight:700;letter-spacing:-.03em;max-width:900px}
+h1 .id{color:var(--cyan)}
+h1 .priv{color:var(--amber)}
+.hero p.tag{margin-top:26px;font-size:clamp(1rem,1.6vw,1.2rem);color:var(--muted);max-width:640px}
+.hero-cta{display:flex;gap:16px;margin-top:42px;flex-wrap:wrap}
+.btn{font-family:var(--mono);font-size:.85rem;text-decoration:none;padding:14px 28px;
+  border-radius:6px;transition:all .25s;letter-spacing:.04em}
+.btn-c{background:var(--cyan);color:#06121f;font-weight:600}
+.btn-c:hover{box-shadow:0 0 28px rgba(79,209,197,.45);transform:translateY(-2px)}
+.btn-o{border:1px solid var(--line);color:var(--text)}
+.btn-o:hover{border-color:var(--cyan);color:var(--cyan)}
+.hero-metrics{display:flex;gap:48px;margin-top:70px;flex-wrap:wrap}
+.metric .n{font-family:var(--display);font-size:2rem;font-weight:700;color:var(--text)}
+.metric .n span{color:var(--cyan)}
+.metric .l{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  backdrop-filter:blur(12px);padding:28px;transition:transform .35s,border-color .35s,box-shadow .35s}
+.panel:hover{border-color:rgba(79,209,197,.45);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+
+/* ---------- pillars (tilt cards) ---------- */
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.pillar{perspective:900px}
+.pillar .panel{height:100%;transform-style:preserve-3d;will-change:transform}
+.pillar .glyph{font-family:var(--mono);font-size:.72rem;color:var(--amber);letter-spacing:.14em;margin-bottom:14px;display:block}
+.pillar h3{font-family:var(--display);font-size:1.18rem;margin-bottom:10px}
+.pillar p{color:var(--muted);font-size:.92rem}
+
+/* ---------- entitlement catalog (skills) ---------- */
+.cat{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.cat .row{display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border:1px solid rgba(143,163,191,.12);
+  border-radius:10px;background:rgba(11,18,36,.5);transition:border-color .25s,transform .25s}
+.cat .row:hover{border-color:var(--cyan-dim);transform:translateX(4px)}
+.cat .k{font-family:var(--mono);font-size:.72rem;color:var(--cyan);letter-spacing:.1em;
+  text-transform:uppercase;min-width:118px;padding-top:3px}
+.cat .v{font-size:.92rem;color:var(--text)}
+.chip{display:inline-block;font-family:var(--mono);font-size:.74rem;color:var(--muted);
+  border:1px solid rgba(143,163,191,.2);border-radius:5px;padding:3px 9px;margin:3px 4px 3px 0;
+  transition:all .2s}
+.chip:hover{color:var(--cyan);border-color:var(--cyan-dim)}
+
+/* ---------- audit log (timeline) ---------- */
+.log{position:relative;margin-left:8px}
+.log::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;
+  background:linear-gradient(var(--cyan),rgba(79,209,197,.05))}
+.entry{position:relative;padding:0 0 54px 42px}
+.entry::before{content:"";position:absolute;left:-5px;top:8px;width:11px;height:11px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(79,209,197,.6)}
+.entry.priv::before{border-color:var(--amber);box-shadow:0 0 12px rgba(246,173,85,.6)}
+.entry .when{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.1em}
+.entry h3{font-family:var(--display);font-size:1.28rem;margin:8px 0 2px}
+.entry .org{font-family:var(--mono);font-size:.8rem;color:var(--cyan);margin-bottom:14px}
+.entry.priv .org{color:var(--amber)}
+.entry ul{list-style:none;margin-top:10px}
+.entry li{color:var(--muted);font-size:.93rem;padding-left:20px;position:relative;margin-bottom:7px}
+.entry li::before{content:"›";position:absolute;left:0;color:var(--cyan)}
+.stack{margin-top:14px}
+
+/* ---------- certs ---------- */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.cert{display:flex;gap:16px;align-items:center}
+.cert .badge{width:46px;height:46px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:.7rem;font-weight:600;color:#06121f;background:linear-gradient(135deg,var(--cyan),#2C9E94)}
+.cert.amber .badge{background:linear-gradient(135deg,var(--amber),#C77F2E)}
+.cert h4{font-family:var(--display);font-size:.98rem}
+.cert span{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+
+/* ---------- contact ---------- */
+.contact{text-align:center;padding-bottom:140px}
+.contact h2{font-size:clamp(2rem,5vw,3.4rem)}
+.contact .links{display:flex;gap:18px;justify-content:center;margin-top:40px;flex-wrap:wrap}
+
+footer{position:relative;z-index:2;border-top:1px solid rgba(79,209,197,.08);
+  padding:26px;text-align:center;font-family:var(--mono);font-size:.74rem;color:var(--muted)}
+
+/* ---------- reveal ---------- */
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .dot{animation:none}
+  *{scroll-behavior:auto!important}
+}
+@media(max-width:720px){
+  nav ul{display:none}
+  section{padding:80px 0}
+  .hero-metrics{gap:28px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="nexus"></canvas>
+<div class="vignette"></div>
+
+<nav>
+  <a class="logo" href="#top"><b>identity</b>@randhir:~$</a>
+  <ul>
+    <li><a href="#pillars">// domains</a></li>
+    <li><a href="#skills">// catalog</a></li>
+    <li><a href="#log">// audit_trail</a></li>
+    <li><a href="#certs">// attestations</a></li>
+    <li><a href="#contact">// request_access</a></li>
+  </ul>
+</nav>
+
+<div class="wrap" id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="status"><span class="dot"></span>ACCESS GRANTED · IAM PRINCIPAL ONLINE</div>
+    <h1>Architecting <span class="id">identity</span> at enterprise scale.<br>
+        Securing the <span class="priv">privileged</span> few.</h1>
+    <p class="tag">Randhir Singh — Cybersecurity IAM SME. 15+ years designing, building, and governing
+       identity ecosystems with SailPoint IIQ &amp; IdentityNow ISC, CyberArk PAM, Saviynt IGA, and Oracle IAM —
+       from HLD to production, across healthcare, banking, telecom, and government.</p>
+    <div class="hero-cta">
+      <a class="btn btn-c" href="#contact">Request access →</a>
+      <a class="btn btn-o" href="#log">View audit trail</a>
+    </div>
+    <div class="hero-metrics">
+      <div class="metric"><div class="n">15<span>+</span></div><div class="l">Years in IAM</div></div>
+      <div class="metric"><div class="n">15K<span>+</span></div><div class="l">Privileged accounts secured</div></div>
+      <div class="metric"><div class="n">10<span>+</span></div><div class="l">Enterprise programmes</div></div>
+      <div class="metric"><div class="n">4</div><div class="l">Platform certifications</div></div>
+    </div>
+  </section>
+
+  <!-- PILLARS -->
+  <section id="pillars">
+    <div class="eyebrow reveal">DOMAINS.OF_CONTROL</div>
+    <h2 class="reveal">Four pillars, one control plane</h2>
+    <p class="sub reveal">Every identity, every entitlement, every privileged session — governed.</p>
+    <div class="grid4">
+      <div class="pillar reveal"><div class="panel">
+        <span class="glyph">[ IGA ]</span>
+        <h3>Identity Governance</h3>
+        <p>SailPoint IIQ 8x &amp; ISC end-to-end: JML lifecycle, RBAC, SoD policies, certification campaigns, custom workflows &amp; plugins in BeanShell/Java.</p>
+      </div></div>
+      <div class="pillar reveal"><div class="panel">
+        <span class="glyph">[ PAM ]</span>
+        <h3>Privileged Access</h3>
+        <p>CyberArk PAS design &amp; deployment — Vault, PVWA, CPM, PSM, PSMP. 15K+ privileged accounts under least-privilege control.</p>
+      </div></div>
+      <div class="pillar reveal"><div class="panel">
+        <span class="glyph">[ ARCH ]</span>
+        <h3>Architecture &amp; Design</h3>
+        <p>HLD/LLD authorship, multi-environment topologies, SSB/GitLab deployment automation, tokenized builds, platform upgrades &amp; cloud migration (IIQ → ISC).</p>
+      </div></div>
+      <div class="pillar reveal"><div class="panel">
+        <span class="glyph">[ INTG ]</span>
+        <h3>Integration Engineering</h3>
+        <p>Workday, ServiceNow, AD/Azure AD, EBS, SAP HCM, mainframe &amp; REST/SCIM web services — connected sources to disconnected apps, all onboarded.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="eyebrow reveal">ENTITLEMENT.CATALOG</div>
+    <h2 class="reveal">The stack, fully provisioned</h2>
+    <p class="sub reveal">Granted entitlements — accumulated across 15 years of production deployments.</p>
+    <div class="cat">
+      <div class="row reveal"><div class="k">Identity</div><div class="v">
+        <span class="chip">SailPoint IIQ 8x</span><span class="chip">IdentityNow ISC</span><span class="chip">Saviynt IGA</span><span class="chip">Oracle IAM 12c</span><span class="chip">MS FIM</span></div></div>
+      <div class="row reveal"><div class="k">Privileged</div><div class="v">
+        <span class="chip">CyberArk Vault</span><span class="chip">PVWA</span><span class="chip">CPM</span><span class="chip">PSM / PSMP</span><span class="chip">AIM</span></div></div>
+      <div class="row reveal"><div class="k">Access / SSO</div><div class="v">
+        <span class="chip">Okta SSO</span><span class="chip">Azure SSO / O365</span><span class="chip">Oracle OAM</span></div></div>
+      <div class="row reveal"><div class="k">Directories</div><div class="v">
+        <span class="chip">Active Directory</span><span class="chip">Azure AD</span><span class="chip">OUD</span><span class="chip">OID</span><span class="chip">ODSEE</span></div></div>
+      <div class="row reveal"><div class="k">Languages</div><div class="v">
+        <span class="chip">Java / J2EE</span><span class="chip">BeanShell</span><span class="chip">PowerShell</span><span class="chip">Shell Script</span><span class="chip">LDAP API</span><span class="chip">XML</span></div></div>
+      <div class="row reveal"><div class="k">Connectors</div><div class="v">
+        <span class="chip">Workday</span><span class="chip">ServiceNow</span><span class="chip">SCIM / REST</span><span class="chip">JDBC</span><span class="chip">PeopleSoft</span><span class="chip">Exchange</span><span class="chip">Flat File</span></div></div>
+      <div class="row reveal"><div class="k">Runtime</div><div class="v">
+        <span class="chip">Tomcat 9x</span><span class="chip">WebLogic 14x</span><span class="chip">RHEL / Oracle Linux</span><span class="chip">MS SQL</span><span class="chip">Oracle DB</span></div></div>
+      <div class="row reveal"><div class="k">DevOps</div><div class="v">
+        <span class="chip">GitLab</span><span class="chip">Bitbucket</span><span class="chip">SSB Automation</span><span class="chip">Splunk</span><span class="chip">Kibana</span><span class="chip">Agile / SCRUM</span></div></div>
+    </div>
+  </section>
+
+  <!-- AUDIT LOG -->
+  <section id="log">
+    <div class="eyebrow reveal">AUDIT.TRAIL</div>
+    <h2 class="reveal">Every engagement, logged</h2>
+    <p class="sub reveal">A career written like an access log — chronological, attributable, immutable.</p>
+    <div class="log">
+
+      <div class="entry reveal">
+        <div class="when">2024-01 → PRESENT</div>
+        <h3>Principal IAM Expert</h3>
+        <div class="org">Appex Innovation LLC · Healthcare · SailPoint IIQ / CyberArk / MS SQL</div>
+        <ul>
+          <li>Lead application onboarding &amp; target integration design — Workday, AD, Azure AD, ServiceNow, JDBC, web services, disconnected apps.</li>
+          <li>Engineered JML lifecycle with RBAC, custom BeanShell workflows, plugins &amp; SoD policy rules.</li>
+          <li>Integrated IIQ with CyberArk PAS — Vault, PVWA, CPM, PSM, PSMP install &amp; customization.</li>
+          <li>Own SSB build &amp; tokenized deployment automation across DEV → PROD via GitLab.</li>
+        </ul>
+      </div>
+
+      <div class="entry reveal">
+        <div class="when">2022-08 → 2023-12</div>
+        <h3>IAM / IIQ SME</h3>
+        <div class="org">Appex Innovation LLC · Wintrust Financial (Banking) · IIQ 7x</div>
+        <ul>
+          <li>Led PoC-to-production delivery: multi-environment IIQ install, app onboarding, lifecycle automation.</li>
+          <li>Integrated multi-domain AD, OUD, Oracle EBS, mainframe &amp; REST web services; built custom connectors.</li>
+          <li>CyberArk PAM implementation securing 15,000+ privileged accounts.</li>
+          <li>ServiceNow JML &amp; ticketing integration via OOTB connectors and REST API.</li>
+        </ul>
+      </div>
+
+      <div class="entry priv reveal">
+        <div class="when">2021-06 → 2022-09</div>
+        <h3>IAM SME</h3>
+        <div class="org">Appex Innovation LLC · Millicom Telecom / TIGO (LATAM) · IIQ 8.3</div>
+        <ul>
+          <li>JML platform with Workday as trusted source; AD, EBS &amp; Azure AD targets.</li>
+          <li>Access certifications, birthright provisioning, compliance reporting &amp; PAM credential lifecycle.</li>
+          <li>Patching 7.3 P2→P7 and upgrade 7.2→8.1 across multi-node setups with GitLab automation.</li>
+          <li>Led cloud migration PoC: IIQ → SailPoint ISC.</li>
+        </ul>
+      </div>
+
+      <div class="entry reveal">
+        <div class="when">2019-01 → 2021-05</div>
+        <h3>Principal Security Specialist</h3>
+        <div class="org">Appex Innovation LLC · TennCare Medicaid · Oracle IAM 12c</div>
+        <ul>
+          <li>Upgraded full Oracle stack OIM 11g PS3 → 12c PS4 (OIM, OAM, OUD, BIP, Federated SSO, SOA).</li>
+          <li>REST API integrations; OIM deployment on AWS; SailPoint IIQ PoC with RBAC integrations.</li>
+        </ul>
+      </div>
+
+      <div class="entry reveal">
+        <div class="when">2005 → 2019</div>
+        <h3>Foundation years — global delivery</h3>
+        <div class="org">AST · Deloitte · Cognizant · Prosense · Oracle · Accenture · Aujas · Wipro · SDG</div>
+        <ul>
+          <li>Cobham: multi-node IIQ + CyberArk administration (Vault, CPM, PVWA, PSM, AIM).</li>
+          <li>Sovereign NZ (Deloitte): IIQ HLD/LLD, ServiceNow ITSM &amp; AWS group-based access.</li>
+          <li>Central Bank of South Africa: IIQ with AD/Exchange/Azure O365, RBAC birthright provisioning.</li>
+          <li>Oracle Global Support: Principal Engineer for OIM/OAM worldwide escalations.</li>
+          <li>Telia Sonera / NBN / Zurich (Accenture): OIM architecture, SAP HR feeds, OIA role mining.</li>
+          <li>Uninor (Wipro), GE (SDG): OIM 10g→11g upgrades, Sun IDM lifecycle engineering.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CERTS -->
+  <section id="certs">
+    <div class="eyebrow reveal">ATTESTATIONS.VERIFIED</div>
+    <h2 class="reveal">Certified &amp; attested</h2>
+    <p class="sub reveal">Vendor-verified credentials — reviewed, signed, and current.</p>
+    <div class="grid2">
+      <div class="panel cert reveal"><div class="badge">SP</div>
+        <div><h4>SailPoint Certified IdentityIQ Engineer</h4><span>ISSUED 2024 · STATUS: ACTIVE</span></div></div>
+      <div class="panel cert reveal"><div class="badge">SP</div>
+        <div><h4>SailPoint IdentityNow Engineer &amp; Professional</h4><span>ISSUED 2024 · STATUS: ACTIVE</span></div></div>
+      <div class="panel cert amber reveal"><div class="badge">CA</div>
+        <div><h4>CyberArk Defender Certified</h4><span>ISSUED 2021 · STATUS: ACTIVE</span></div></div>
+      <div class="panel cert reveal"><div class="badge">SV</div>
+        <div><h4>Saviynt IGA L200 Certified</h4><span>ISSUED 2025 · STATUS: ACTIVE</span></div></div>
+    </div>
+    <div style="margin-top:28px" class="reveal">
+      <span class="chip">M.C.A — Visvesvaraya Technical University</span>
+      <span class="chip">PGD Business Management — XIMB</span>
+      <span class="chip">Sun IDM Advanced Training</span>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="contact">
+    <div class="eyebrow reveal" style="justify-content:center">REQUEST.ACCESS</div>
+    <h2 class="reveal">Need an identity architect<br>with production scars?</h2>
+    <p class="sub reveal" style="margin:18px auto 0">Approval workflow is short: one email, one conversation.</p>
+    <div class="links reveal">
+      <a class="btn btn-c" href="mailto:randhirsingh01@gmail.com">randhirsingh01@gmail.com</a>
+      <a class="btn btn-o" href="https://www.linkedin.com/in/randhirsingh01/" target="_blank" rel="noopener">LinkedIn ↗</a>
+      <a class="btn btn-o" href="tel:+16159681392">+1 615 968 1392</a>
+    </div>
+  </section>
+
+</div>
+
+<footer>identity@randhir:~$ session_end · © 2026 Randhir Singh · governed by zero trust, rendered in three.js</footer>
+
+<script>
+/* ================= 3D IDENTITY NEXUS ================= */
+(function(){
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('nexus');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x070B16, 0.028);
+  const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, .1, 200);
+  camera.position.set(0, 2, 26);
+
+  /* central governance core */
+  const coreGeo = new THREE.IcosahedronGeometry(2.2, 1);
+  const coreMat = new THREE.MeshBasicMaterial({color:0x4FD1C5, wireframe:true, transparent:true, opacity:.85});
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(core);
+  const coreInner = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1,0),
+    new THREE.MeshBasicMaterial({color:0xF6AD55, wireframe:true, transparent:true, opacity:.6}));
+  scene.add(coreInner);
+
+  /* orbital identity nodes */
+  const NODES = 64, nodes = [];
+  const nodeGeo = new THREE.SphereGeometry(.13, 8, 8);
+  const cyanMat = new THREE.MeshBasicMaterial({color:0x4FD1C5});
+  const amberMat = new THREE.MeshBasicMaterial({color:0xF6AD55});
+  const group = new THREE.Group();
+  for(let i=0;i<NODES;i++){
+    const priv = Math.random()<.18;
+    const m = new THREE.Mesh(nodeGeo, priv?amberMat:cyanMat);
+    const r = 6 + Math.random()*11;
+    const theta = Math.random()*Math.PI*2;
+    const y = (Math.random()-.5)*9;
+    m.userData = {r, theta, y, speed:(.08+Math.random()*.22)*(Math.random()<.5?1:-1), priv};
+    group.add(m); nodes.push(m);
+  }
+  scene.add(group);
+
+  /* access paths: lines from core to nodes */
+  const lineMat = new THREE.LineBasicMaterial({color:0x4FD1C5, transparent:true, opacity:.12});
+  const linePosArr = new Float32Array(NODES*2*3);
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArr,3));
+  scene.add(new THREE.LineSegments(lineGeo, lineMat));
+
+  /* starfield dust */
+  const dustN=700, dustPos=new Float32Array(dustN*3);
+  for(let i=0;i<dustN;i++){
+    dustPos[i*3]=(Math.random()-.5)*120;
+    dustPos[i*3+1]=(Math.random()-.5)*80;
+    dustPos[i*3+2]=(Math.random()-.5)*120;
+  }
+  const dustGeo=new THREE.BufferGeometry();
+  dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+  scene.add(new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0x8FA3BF,size:.07,transparent:true,opacity:.5})));
+
+  /* mouse parallax + scroll dolly */
+  let mx=0,my=0,scrollY=0;
+  addEventListener('mousemove',e=>{
+    mx=(e.clientX/innerWidth-.5)*2; my=(e.clientY/innerHeight-.5)*2;
+  },{passive:true});
+  addEventListener('scroll',()=>{scrollY=window.scrollY;},{passive:true});
+
+  function resize(){
+    renderer.setSize(innerWidth,innerHeight);
+    camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize',resize); resize();
+
+  let t=0;
+  function frame(){
+    requestAnimationFrame(frame);
+    t+=reduced?0:.006;
+    core.rotation.y=t*.6; core.rotation.x=t*.25;
+    coreInner.rotation.y=-t*1.1; coreInner.rotation.z=t*.4;
+    const pulse=1+Math.sin(t*2.4)*.05; core.scale.setScalar(pulse);
+
+    nodes.forEach((m,i)=>{
+      const u=m.userData; u.theta+=u.speed*.012;
+      m.position.set(Math.cos(u.theta)*u.r, u.y+Math.sin(t+i)*.4, Math.sin(u.theta)*u.r);
+      linePosArr[i*6]=0;linePosArr[i*6+1]=0;linePosArr[i*6+2]=0;
+      linePosArr[i*6+3]=m.position.x;linePosArr[i*6+4]=m.position.y;linePosArr[i*6+5]=m.position.z;
+    });
+    lineGeo.attributes.position.needsUpdate=true;
+
+    group.rotation.y=t*.07;
+    /* camera: mouse parallax + scroll pull-back */
+    const dolly=26+Math.min(scrollY*.012,14);
+    camera.position.x+=((mx*3)-camera.position.x)*.04;
+    camera.position.y+=((2-my*2)-camera.position.y)*.04;
+    camera.position.z+=(dolly-camera.position.z)*.06;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  }
+  frame();
+})();
+
+/* ================= scroll reveal ================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ================= 3D tilt cards ================= */
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.querySelectorAll('.pillar').forEach(p=>{
+    const card=p.querySelector('.panel');
+    p.addEventListener('mousemove',e=>{
+      const r=p.getBoundingClientRect();
+      const x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5;
+      card.style.transform=`rotateY(${x*14}deg) rotateX(${-y*14}deg) translateZ(12px)`;
+    });
+    p.addEventListener('mouseleave',()=>{card.style.transform='';});
+  });
+}
+</script>
+</body>
+</html>
